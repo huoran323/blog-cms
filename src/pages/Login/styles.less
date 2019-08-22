@@ -1,0 +1,59 @@
+@import '../../utils/mixin.less';
+
+.form {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  margin: -160px 0 0 -180px;
+  width: 360px;
+  padding: 36px;
+  border-radius: 5px;
+  box-shadow: 0 0 100px rgba(0, 0, 0, 0.08);
+  background-color: #fff;
+
+  :global {
+    .has-error .ant-form-explain {
+      font-size: 12px;
+    }
+
+    .ant-input-group-addon {
+      width: 77px;
+      padding: 0;
+    }
+
+    .ant-form-item {
+      margin-bottom: 10px;
+    }
+  }
+
+  .logo {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    left: 50%;
+    top: -35px;
+    transform: translateX(-50%);
+  }
+
+  .title {
+    margin-top: 10px;
+    margin-bottom: 16px;
+    text-align: center;
+    font-size: 18px;
+  }
+
+  button {
+    margin-top: 10px;
+    background-color: @color-red;
+    border: none;
+
+    &:hover,
+    &:focus {
+      background-color: rgba(@color-red, 0.8);
+    }
+    &:active,
+    &.active {
+      background-color: rgba(@color-red, 0.9);
+    }
+  }
+}

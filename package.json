@@ -1,0 +1,90 @@
+{
+  "private": true,
+  "name": "react-umi-antd",
+  "scripts": {
+    "start": "umi dev",
+    "start:no-mock": "cross-env MOCK=none umi dev",
+    "build": "umi build",
+    "build:web": "umi build && cd ./dist && anywhere -h localhost -p 8080",
+    "analyze": "cross-env ANALYZE=1 umi build",
+    "lint:es": "eslint --fix --ext .tsx,.ts --fix ./src",
+    "lint:ts": "tslint --fix -p tsconfig.json",
+    "lint:style": "stylelint --fix \"src/**/*.less\" --syntax less",
+    "lint": "yarn lint:ts && yarn lint:es && yarn lint:style",
+    "test": "umi test",
+    "docker:build": "./scripts/docker-build.sh"
+  },
+  "dependencies": {
+    "@antv/data-set": "^0.10.2",
+    "antd": "3.21.2",
+    "bizcharts": "3.5.5",
+    "bizcharts-plugin-slider": "^2.1.1",
+    "braft-editor": "^2.3.7",
+    "braft-extensions": "^0.0.18",
+    "braft-utils": "^3.0.12",
+    "classnames": "^2.2.6",
+    "dva": "^2.6.0-beta.12",
+    "echarts": "^4.2.1",
+    "echarts-for-react": "^2.0.15-beta.0",
+    "immutability-helper": "^3.0.1",
+    "js-cookie": "^2.2.0",
+    "lodash": "^4.17.15",
+    "lodash-decorators": "^6.0.1",
+    "memoize-one": "^5.0.5",
+    "moment": "^2.24.0",
+    "nprogress": "^0.2.0",
+    "path-to-regexp": "^3.0.0",
+    "react": "^16.8.6",
+    "react-contextmenu": "^2.11.0",
+    "react-dnd": "^9.3.4",
+    "react-dnd-html5-backend": "^9.3.4",
+    "react-helmet": "^5.2.1",
+    "react-transition-group": "^4.2.2",
+    "redux-persist": "^5.10.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.17",
+    "@types/lodash": "^4.14.136",
+    "@types/react": "^16.8.24",
+    "@types/react-dom": "^16.8.5",
+    "@types/react-test-renderer": "^16.8.3",
+    "@types/react-transition-group": "^4.2.0",
+    "babel-eslint": "^10.0.2",
+    "cross-env": "^5.2.0",
+    "eslint": "^5.16.0",
+    "eslint-config-umi": "^1.5.0",
+    "eslint-plugin-flowtype": "^3.13.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-react": "^7.14.3",
+    "husky": "^3.0.2",
+    "lint-staged": "^9.2.1",
+    "mockjs": "^1.0.1-beta3",
+    "prettier": "^1.18.2",
+    "react-test-renderer": "^16.8.6",
+    "slash2": "^2.0.0",
+    "stylelint": "^10.1.0",
+    "stylelint-config-prettier": "^5.2.0",
+    "stylelint-config-standard": "^18.3.0",
+    "tslint": "^5.18.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-react": "^4.0.0",
+    "umi": "^2.8.16",
+    "umi-plugin-react": "^1.9.14"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.less": "stylelint --syntax less",
+    "**/*.{js,jsx,ts,tsx,json,less}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  }
+}

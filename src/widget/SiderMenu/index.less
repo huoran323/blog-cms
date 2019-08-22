@@ -1,0 +1,106 @@
+@import '../../utils/mixin.less';
+
+@nav-header-height: @layout-header-height;
+
+.logo {
+  position: relative;
+  height: @nav-header-height;
+  line-height: @nav-header-height;
+  padding-left: (@menu-collapsed-width - 32px) / 2;
+  overflow: hidden;
+  background-color: @color-menu;
+  box-shadow: 1px 1px 0 0 rgba(0, 0, 0, 0.5);
+  transition: all 0.3s;
+
+  img {
+    height: 32px;
+  }
+
+  h1 {
+    display: inline-block;
+    margin-left: 12px;
+    margin-bottom: 0;
+    font-size: 20px;
+    color: #fff;
+  }
+}
+
+.sider {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  min-height: 100vh;
+  box-shadow: 2px 0 8px 0 rgba(29, 35, 41, 0.05);
+
+  :global {
+    .ant-menu-root {
+      background-color: @color-menu;
+      height: ~'calc(100vh - @{nav-header-height})';
+      overflow-y: auto;
+    }
+    .ant-menu-inline {
+      border-right: 0;
+      .ant-menu-item,
+      .ant-menu-submenu-title {
+        width: 100%;
+      }
+    }
+  }
+
+  &.light {
+    background-color: @color-white;
+    box-shadow: 2px 0 8px rgba(29, 35, 41, 0.05);
+
+    .logo {
+      background-color: @color-white;
+      box-shadow: 1px 1px 0 0 @border-color-split;
+      h1 {
+        color: @primary-color;
+      }
+    }
+
+    :global {
+      .ant-menu-root {
+        background-color: @color-white;
+      }
+
+      .ant-menu-light {
+        border-right-color: transparent;
+      }
+    }
+  }
+}
+
+:global {
+  .ant-menu-dark .ant-menu-sub {
+    background-color: @color-menu;
+  }
+
+  .ant-menu-inline-collapsed {
+    & > .ant-menu-item .sider-menu-item-img + span,
+    &
+      > .ant-menu-item-group
+      > .ant-menu-item-group-list
+      > .ant-menu-item
+      .sider-menu-item-img
+      + span,
+    & > .ant-menu-submenu > .ant-menu-submenu-title .sider-menu-item-img + span {
+      display: inline-block;
+      max-width: 0;
+      opacity: 0;
+    }
+  }
+
+  .ant-menu-item .sider-menu-item-img + span,
+  .ant-menu-submenu-title .sider-menu-item-img + span {
+    opacity: 1;
+    transition: opacity 0.3s @ease-in-out, width 0.3s @ease-in-out;
+  }
+
+  .ant-drawer-left {
+    .ant-drawer-body {
+      padding: 0;
+    }
+  }
+}

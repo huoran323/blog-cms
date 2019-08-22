@@ -1,0 +1,25 @@
+@import '../../utils/mixin.less';
+
+.tagSelect {
+  background-color: @color-white;
+
+  :global {
+    .ant-tag {
+      &:hover,
+      &:focus,
+      &:visited {
+        color: @color-red;
+        background-color: #fff;
+      }
+    }
+
+    .ant-tag-checkable-checked {
+      background-color: @color-red;
+
+      &:hover {
+        color: @color-white;
+        background-color: @color-red;
+      }
+    }
+  }
+}
