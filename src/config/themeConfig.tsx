@@ -22,7 +22,7 @@ module.exports = {
   '@layout-header-height': '56px', // 布局头部组件高度
 
   // form
-  '@form-item-margin-bottom': '12px', // formItem下边距
+  '@form-item-margin-bottom': '16px', // formItem下边距
 
   // Table
   '@table-padding-vertical': '14px',
