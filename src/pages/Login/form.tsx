@@ -27,6 +27,7 @@ export const loginForm = (captureImg, getCaptureImage, handleLogin) => [
     formItem: {
       initialValue: '753951',
       rules: [getTextRequire()],
+      prefix: <Icon type="lock" />,
       onPressEnter: handleLogin,
     },
   },
@@ -36,7 +37,7 @@ export const loginForm = (captureImg, getCaptureImage, handleLogin) => [
     layout: fullLayout,
     formItem: {
       rules: [getTextRequire()],
-      prefix: <Icon type="lock" />,
+      prefix: <Icon type="message" />,
       addonAfter: (
         <img
           style={{ width: '100%', height: 26 }}
