@@ -2,9 +2,9 @@ import React from 'react';
 import { Form, Row, Col, Button } from 'antd';
 import _ from 'lodash';
 import cx from 'classnames';
-import styles from './index.less';
 import { getFieldComp } from '@/utils/util';
 import Dict from '@/config/dict';
+import styles from './index.less';
 
 const FormItem = Form.Item;
 const PlainComp = ({ className, children }: { className: string; children: React.ReactNode }) => (
@@ -13,7 +13,7 @@ const PlainComp = ({ className, children }: { className: string; children: React
 
 interface IProps {
   formList: any[]; // 控件列表
-  formType?: 'grid' | 'inline'; // 布局类型
+  type?: 'grid' | 'inline'; // 布局类型
   rows?: object; // Row配置
   cols?: object; // Col配置
   appendTo?: any; // 表单弹出框处理方案
@@ -39,7 +39,7 @@ const CustomForm: React.FC<IProps> = props => {
     record,
     formList,
     className,
-    formType,
+    type,
     rows,
     cols,
     appendTo,
@@ -72,12 +72,12 @@ const CustomForm: React.FC<IProps> = props => {
   };
 
   const cls = cx(styles['custom-form'], className, {
-    [styles['form-inline']]: formType === 'inline',
-    [styles['form-grid']]: formType === 'grid',
+    [styles['form-inline']]: type === 'inline',
+    [styles['form-grid']]: type === 'grid',
   });
 
-  const ComponentRow = formType === 'inline' ? PlainComp : Row;
-  const ComponentCol = formType === 'inline' ? PlainComp : Col;
+  const ComponentRow = type === 'inline' ? PlainComp : Row;
+  const ComponentCol = type === 'inline' ? PlainComp : Col;
 
   let getPopupContainer = null;
   if (appendTo) {
@@ -92,11 +92,16 @@ const CustomForm: React.FC<IProps> = props => {
 
   const formFields = formList.filter(item => item.name);
   return (
-    <Form className={cls}{...otherProps} onSubmit={onSubmit}>
+    <Form
+      className={cls}
+      {...otherProps}
+      onSubmit={onSubmit}
+      {...(type === 'inline' && { layout: 'inline' })}
+    >
       <ComponentRow className={styles['row-item']} {...rows}>
         {formFields.map((field, i) => {
           // 判断动态表单项的显示与隐藏
-          let visible = typeof field.visible !== 'undefined' ? field.visible : true;
+          let visible = true;
           if (field.visible) {
             const fieldsValue = form.getFieldsValue(Object.keys(field.visible));
             Object.keys(field.visible).forEach(item => {
@@ -110,19 +115,19 @@ const CustomForm: React.FC<IProps> = props => {
 
           // 传入个性化的列大小，改变这个值可以改变每行元素的个数
           let col = { ...cols };
-          if (formType === 'grid' && field.col) {
+          if (type === 'grid' && field.col) {
             col = field.col;
-          } else if (formType !== 'grid') {
+          } else if (type !== 'grid') {
             col = {};
           }
 
           let layout = { ...formItemLayout };
-          if (formType === 'grid' && field.layout) {
+          if (type === 'grid' && field.layout) {
             layout = {
               ...formItemLayout,
               ...field.layout,
             };
-          } else if (formType !== 'grid') {
+          } else if (type !== 'grid') {
             layout = {};
           }
 
@@ -137,7 +142,7 @@ const CustomForm: React.FC<IProps> = props => {
             ...field.formItem,
           };
 
-          if (fieldType === 'inline') {
+          if (type === 'inline') {
             formProps.style = {
               width: formProps.width || this.width[fieldType],
             };
@@ -177,7 +182,7 @@ const CustomForm: React.FC<IProps> = props => {
 };
 
 CustomForm.defaultProps = {
-  formType: 'grid',
+  type: 'grid',
   loading: false,
   formItemLayout: {
     labelCol: { span: 6 },

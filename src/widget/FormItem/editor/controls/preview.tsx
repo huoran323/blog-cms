@@ -6,14 +6,21 @@ import { confirm } from '@/widget/CommonModal';
 const PreviewModal: React.FC<any> = props => {
   const { html, close, ...restProps } = props;
   return (
-    <Modal {...restProps} onCancel={close} onOk={close}>
+    <Modal
+      {...restProps}
+      title="预览"
+      onCancel={close}
+      onOk={close}
+      okText="确定"
+      cancelText="取消"
+    >
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </Modal>
   );
 };
 
-const previewControls = (editor): ExtendControlType => ({
-  key: 'custom-button',
+const previewControl = (editor, options): ExtendControlType => ({
+  key: 'preview',
   type: 'button',
   text: '预览',
   onClick: () => {
@@ -23,4 +30,4 @@ const previewControls = (editor): ExtendControlType => ({
   },
 });
 
-export default previewControls;
+export default previewControl;

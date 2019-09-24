@@ -3,11 +3,13 @@ import BraftEditor from 'braft-editor';
 import Table from 'braft-extensions/dist/table';
 import MaxLength from 'braft-extensions/dist/max-length';
 import { ContentUtils } from 'braft-utils';
+import ColorPicker from 'braft-extensions/dist/color-picker';
 import 'braft-editor/dist/index.css';
 import 'braft-extensions/dist/table.css';
+import 'braft-extensions/dist/color-picker.css';
 import 'braft-extensions/dist/code-highlighter.css';
 
-import previewControls from './controls/preview';
+import CustomControls from './controls';
 
 // 表格扩展
 BraftEditor.use(Table());
@@ -19,16 +21,28 @@ BraftEditor.use(
   })
 );
 
+// 高级拾色器扩展
+BraftEditor.use(
+  ColorPicker({
+    theme: 'light', // 支持dark和light两种主题，默认为dark
+  })
+);
+
 interface IBraftEditorProps {
   form?: any;
+  extendControlKey?: any[];
   valueType?: 'raw' | 'html';
   onChange?: (content) => void;
-  value?: any;
 }
 
+/**
+ * 编辑器控件
+ * 文档地址: https://www.yuque.com/braft-editor/be/lzwpnr
+ * 编辑器首页: https://braft.margox.cn/
+ */
 const MyBraftEditor: React.FC<IBraftEditorProps> = props => {
   const editorRef = useRef();
-  const { form, valueType, onChange, ...restProps } = props;
+  const { form, valueType, extendControlKey, onChange, ...restProps } = props;
 
   // 处理文本黏贴
   const handlePastedText = (text, HTML, editorState, editor) => {
@@ -61,6 +75,15 @@ const MyBraftEditor: React.FC<IBraftEditorProps> = props => {
     }
   };
 
+  // 自定义控件
+  const customControlKeys = Object.keys(CustomControls);
+  const extendControls: any = extendControlKey.map(key => {
+    let index = customControlKeys.indexOf(key);
+    if (key !== -1) {
+      return CustomControls[customControlKeys[index]];
+    }
+  });
+
   return (
     <BraftEditor
       ref={editorRef}
@@ -91,7 +114,7 @@ const MyBraftEditor: React.FC<IBraftEditorProps> = props => {
           embed: false,
         },
       }}
-      extendControls={[previewControls(editorRef)]}
+      extendControls={extendControls.map(control => control(editorRef, { form, ...restProps }))}
       {...restProps}
     />
   );
@@ -99,6 +122,7 @@ const MyBraftEditor: React.FC<IBraftEditorProps> = props => {
 
 MyBraftEditor.defaultProps = {
   valueType: 'html',
+  extendControlKey: [],
 };
 
 export default MyBraftEditor;

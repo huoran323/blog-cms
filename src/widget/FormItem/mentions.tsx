@@ -120,5 +120,5 @@ export default ({
     placeholder: otherProps.placeholder || `请输入`,
   };
 
-  return getFieldDecorator(name, formFieldOptions)(<MentionsControlled {...props} />);
+  return getFieldDecorator(name, formFieldOptions)(MentionsControlled(props));
 };

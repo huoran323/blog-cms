@@ -1,4 +1,4 @@
-import { getTextRequire } from '@/utils/validate';
+import { getTextRequire, getRequire } from '@/utils/validate';
 
 const layout = {
   labelCol: { span: 6 },
@@ -36,13 +36,25 @@ export const basicForm = [
     },
   },
   {
-    name: 'standard',
-    label: '衡量标准',
-    type: 'textarea',
+    name: 'content',
+    label: '内容',
+    type: 'editor',
     layout,
     formItem: {
-      placeholder: '请输入衡量标准',
-      rules: [getTextRequire()],
+      placeholder: '请输入',
+      extendControlKey: ['uploader'],
+      rules: [
+        {
+          required: true,
+          validator: (_, value, callback) => {
+            if (value.isEmpty()) {
+              callback('请输入内容');
+            } else {
+              callback();
+            }
+          },
+        },
+      ],
     },
   },
   {
@@ -95,11 +107,9 @@ export const basicForm = [
     },
     visible: { public: '2' },
     formItem: {
-      dict: [
-        { text: '同事甲', value: '1' },
-        { text: '同事乙', value: '2' },
-        { text: '同事丙', value: '3' },
-      ],
+      showSearch: true,
+      showArrow: false,
+      remoteUrl: '/api/dict/200001',
     },
   },
 ];

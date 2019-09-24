@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Select, Spin } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Select } from 'antd';
 import _ from 'lodash';
 import request from '@/utils/request';
 import { IControlProps } from '@/widget/controls';
@@ -26,16 +26,12 @@ export default function SelectControl({
   rules,
   onChange,
   normalize,
-  hasAll,
   remoteUrl,
   showSearch,
   ...otherProps
 }: ISelectProps) {
   const { getFieldDecorator } = form;
   const formFieldOptions: any = {};
-
-  let lastFetchId = 0;
-  const [isFetching, setFetching] = useState(false);
   const [selectDict, setDict] = useState(dict);
 
   // 异步请求字典数据
@@ -43,17 +39,18 @@ export default function SelectControl({
     if (remoteUrl) {
       fetchData();
     }
-  }, [remoteUrl]);
+  }, []);
 
-  const fetchData = _.throttle((value = '') => {
-    setFetching(true);
-
+  let currentValue;
+  const fetchData = _.debounce(async (value = '') => {
+    currentValue = value;
     const url = showSearch ? `${remoteUrl}?keyword=${value}` : remoteUrl;
-    request(url).then(res => {
-      setDict(res.data);
-      setFetching(false);
-    });
-  }, 800);
+
+    const result = await request(url);
+    if (currentValue === value) {
+      setDict(result.data);
+    }
+  }, 300);
 
   // 初始值处理
   let initVal = initialValue;
@@ -85,41 +82,40 @@ export default function SelectControl({
   if (typeof onChange === 'function') {
     formFieldOptions.onChange = value => {
       onChange(form, name, value);
-      form.setFieldsValue({ name: value });
     };
   }
 
   const props: any = {
     showSearch,
     allowClear: true,
+    filterOption: false, // 是否根据输入项进行筛选
     ...otherProps,
     placeholder: otherProps.placeholder || `请选择`,
   };
 
-  return getFieldDecorator(name, formFieldOptions)(
-    <Select
-      {...props}
-      style={{ width: '100%' }}
-      onSearch={fetchData}
-      notFoundContent={isFetching ? <Spin size="small" /> : null}
-    >
-      {props.group
-        ? selectDict.map(dic => (
-            <OptGroup label={dic.text} key={dic.value}>
-              {dic.children.map(subItem => {
-                return (
-                  <Option value={String(subItem.value)} key={subItem.value}>
-                    {subItem.text}
-                  </Option>
-                );
-              })}
-            </OptGroup>
-          ))
-        : selectDict.map(dic => (
-            <Option key={dic.value} value={dic.value} title={dic.text}>
-              {dic.text}
+  if (props.showSearch && remoteUrl) {
+    props.onSearch = fetchData;
+  }
+
+  const options = props.group
+    ? selectDict.map(dic => (
+        <OptGroup label={dic.text} key={dic.value}>
+          {dic.children.map(subItem => (
+            <Option value={String(subItem.value)} key={subItem.value}>
+              {subItem.text}
             </Option>
           ))}
+        </OptGroup>
+      ))
+    : selectDict.map(dic => (
+        <Option key={dic.value} value={dic.value} title={dic.text}>
+          {dic.text}
+        </Option>
+      ));
+
+  return getFieldDecorator(name, formFieldOptions)(
+    <Select {...props} style={{ width: '100%' }}>
+      {options}
     </Select>
   );
 }

@@ -54,7 +54,7 @@ class TagsNav extends PureComponent<ITagNavProps, ITagNavState> {
     };
   }
 
-  componentWillMount() {
+  componentDidMount() {
     const {
       location: { pathname },
     } = this.props;
