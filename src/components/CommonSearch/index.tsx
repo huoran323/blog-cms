@@ -67,7 +67,7 @@ const CommonSearch: React.FC<IProps> = props => {
       }
 
       if (sourceItem.type === 'dateRange') {
-        const [startTime, endTime] = value;
+        const [startTime, endTime] = value || [];
         if (!startTime || !endTime) return;
         data[key] = [startTime.format(startDateFormat), endTime.format(endDateFormat)];
       }
@@ -91,6 +91,7 @@ const CommonSearch: React.FC<IProps> = props => {
   // 触发搜索事件 如果新旧参数不变直接return
   const triggerSearch = values => {
     const { handleSearch } = props;
+    console.log(values);
     setState(prevState => ({ ...prevState, searchParams: values }));
 
     if (handleSearch) {
@@ -139,7 +140,7 @@ const CommonSearch: React.FC<IProps> = props => {
    * @param item
    * @private
    */
-  const _renderFormItem = item => {
+  const renderFormItem = item => {
     const { form } = props;
     const { formItem, ...restProps } = item;
 
@@ -177,7 +178,7 @@ const CommonSearch: React.FC<IProps> = props => {
               span={isOneLine ? item.col || span : span}
               style={{ display: index < showCount ? 'block' : 'none' }}
             >
-              <FormItem label={item.label}>{_renderFormItem(item)}</FormItem>
+              <FormItem label={item.label}>{renderFormItem(item)}</FormItem>
             </Col>
           ))}
 

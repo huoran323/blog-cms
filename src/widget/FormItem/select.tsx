@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Select } from 'antd';
+import React, { useState, useEffect, PureComponent } from 'react';
+import { Select, Spin } from 'antd';
 import _ from 'lodash';
 import request from '@/utils/request';
 import { IControlProps } from '@/widget/controls';
@@ -14,10 +14,65 @@ interface ISelectProps extends IControlProps {
   dict: Array<{ text: string; value: string; children?: Array<{ text: string; value: string }> }>;
 }
 
+class SelectControl extends PureComponent<any> {
+  currentValue = null;
+  state = {
+    dict: this.props.dict,
+  };
+
+  componentDidMount() {
+    if (this.props.remoteUrl) {
+      this.fetchData();
+    }
+  }
+
+  fetchData = _.debounce(async (value = '') => {
+    const { remoteUrl, showSearch } = this.props;
+
+    this.currentValue = value;
+    const url = showSearch ? `${remoteUrl}?keyword=${value}` : remoteUrl;
+
+    const result = await request(url);
+    if (this.currentValue === value) {
+      this.setState({ dict: result.data });
+    }
+  }, 300);
+
+  render() {
+    const { dict } = this.state;
+    const { group, showSearch, remoteUrl } = this.props;
+
+    let extraProps: any = {};
+    if (showSearch && remoteUrl) {
+      extraProps.onSearch = this.fetchData;
+    }
+
+    return (
+      <Select {...this.props} {...extraProps} style={{ width: '100%' }}>
+        {group
+          ? dict.map(dic => (
+              <OptGroup label={dic.text} key={dic.value}>
+                {dic.children.map(subItem => (
+                  <Option value={String(subItem.value)} key={subItem.value}>
+                    {subItem.text}
+                  </Option>
+                ))}
+              </OptGroup>
+            ))
+          : dict.map(dic => (
+              <Option key={dic.value} value={dic.value} title={dic.text}>
+                {dic.text}
+              </Option>
+            ))}
+      </Select>
+    );
+  }
+}
+
 /**
  * 下拉菜单元件
  */
-export default function SelectControl({
+export default ({
   form,
   name,
   dict = [],
@@ -26,31 +81,10 @@ export default function SelectControl({
   rules,
   onChange,
   normalize,
-  remoteUrl,
-  showSearch,
   ...otherProps
-}: ISelectProps) {
+}: ISelectProps) => {
   const { getFieldDecorator } = form;
   const formFieldOptions: any = {};
-  const [selectDict, setDict] = useState(dict);
-
-  // 异步请求字典数据
-  useEffect(() => {
-    if (remoteUrl) {
-      fetchData();
-    }
-  }, []);
-
-  let currentValue;
-  const fetchData = _.debounce(async (value = '') => {
-    currentValue = value;
-    const url = showSearch ? `${remoteUrl}?keyword=${value}` : remoteUrl;
-
-    const result = await request(url);
-    if (currentValue === value) {
-      setDict(result.data);
-    }
-  }, 300);
 
   // 初始值处理
   let initVal = initialValue;
@@ -86,36 +120,12 @@ export default function SelectControl({
   }
 
   const props: any = {
-    showSearch,
+    dict,
     allowClear: true,
     filterOption: false, // 是否根据输入项进行筛选
     ...otherProps,
     placeholder: otherProps.placeholder || `请选择`,
   };
 
-  if (props.showSearch && remoteUrl) {
-    props.onSearch = fetchData;
-  }
-
-  const options = props.group
-    ? selectDict.map(dic => (
-        <OptGroup label={dic.text} key={dic.value}>
-          {dic.children.map(subItem => (
-            <Option value={String(subItem.value)} key={subItem.value}>
-              {subItem.text}
-            </Option>
-          ))}
-        </OptGroup>
-      ))
-    : selectDict.map(dic => (
-        <Option key={dic.value} value={dic.value} title={dic.text}>
-          {dic.text}
-        </Option>
-      ));
-
-  return getFieldDecorator(name, formFieldOptions)(
-    <Select {...props} style={{ width: '100%' }}>
-      {options}
-    </Select>
-  );
-}
+  return getFieldDecorator(name, formFieldOptions)(<SelectControl {...props} />);
+};

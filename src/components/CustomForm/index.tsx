@@ -101,7 +101,7 @@ const CustomForm: React.FC<IProps> = props => {
       <ComponentRow className={styles['row-item']} {...rows}>
         {formFields.map((field, i) => {
           // 判断动态表单项的显示与隐藏
-          let visible = true;
+          let visible = field.visible || true;
           if (field.visible) {
             const fieldsValue = form.getFieldsValue(Object.keys(field.visible));
             Object.keys(field.visible).forEach(item => {

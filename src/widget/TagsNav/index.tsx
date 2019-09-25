@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { connect } from 'dva';
 import router from 'umi/router';
-import { isEqual } from 'lodash';
+import { isEqual, cloneDeep } from 'lodash';
 import { withRouter } from 'react-router';
 import PathToRegexp from 'path-to-regexp';
 import { Dropdown, Button, Icon, Tag, Menu, Tabs } from 'antd';
@@ -35,6 +35,7 @@ interface ITagNavState {
 class TagsNav extends PureComponent<ITagNavProps, ITagNavState> {
   private scrollOuter: HTMLDivElement;
   private scrollBody: HTMLDivElement;
+  private breadNameInfo: { multiple?: any[]; dynamic?: any[] };
 
   constructor(props) {
     super(props);
@@ -56,80 +57,108 @@ class TagsNav extends PureComponent<ITagNavProps, ITagNavState> {
 
   componentDidMount() {
     const {
-      location: { pathname },
+      location: { pathname, search },
     } = this.props;
-    const newState = this.setCurPanes(pathname);
 
+    this.getBreadNameInfo();
+
+    const newState = this.setCurPanes(pathname, search);
     this.setState(newState, () => {
       this.tabStorage();
-      this.getTagElementByRoute(pathname);
+      this.getTagElementByRoute(pathname, search);
     });
   }
 
   componentDidUpdate(prevProps) {
     const {
-      location: { pathname },
+      location: { pathname, search },
     } = this.props;
-    const prevPathname = prevProps.location.pathname;
+    const prevPath = `${prevProps.location.pathname}${prevProps.location.search}`;
 
-    if (pathname !== prevPathname) {
-      const newState = this.setCurPanes(pathname);
+    // pathname: /list/basic/fake_list_0
+    // pathname: /list/draggable/detail,	search: ?id=fake_list_0,	query: { id: fake_list_0 }
+    if (`${pathname}${search}` !== prevPath) {
+      const newState = this.setCurPanes(pathname, search);
       this.setState(newState, () => {
         this.tabStorage();
-        this.getTagElementByRoute(pathname);
+        this.getTagElementByRoute(pathname, search);
       });
     }
   }
 
-  // 设置当前的panels
-  setCurPanes = pathname => {
-    const { tabs, tabChildren } = this.state;
-    const { breadcrumbNameMap, children, location } = this.props;
-    const activeKey = pathname;
-
-    const currPaneIndex = tabs.findIndex(item => {
-      if (item.path && PathToRegexp(item.path).test(pathname)) {
-        item.pathname = pathname;
-        tabChildren[pathname] = React.cloneElement(children, { location });
-        return true;
-      }
-    });
-
-    if (currPaneIndex !== -1) {
-      return {
-        ...this.state,
-        activeKey,
-        tabChildren,
-        noMatch: false,
-      };
-    } else {
-      // @ts-ignore
-      const newTabs = Object.values(breadcrumbNameMap).filter(item => {
-        if (item['path'] && PathToRegexp(item['path']).test(pathname)) {
-          item['pathname'] = pathname;
-          tabChildren[pathname] = React.cloneElement(children, { location });
-          return item;
+  // 获取面包屑配置信息
+  getBreadNameInfo = () => {
+    const { breadcrumbNameMap } = this.props;
+    this.breadNameInfo = Object.values(breadcrumbNameMap).reduce(
+      (prev: any, curr: any) => {
+        if (curr.multiple) {
+          prev.multiple.push(curr.path);
         }
-      });
+        if (curr.shouldCache) {
+          prev.dynamic.push(curr.path);
+        }
 
-      if (newTabs.length) {
-        return {
-          ...this.state,
-          activeKey,
-          noMatch: false,
-          tabChildren,
-          tabs: tabs.concat(newTabs),
-        };
-      } else {
-        return {
-          ...this.state,
-          activeKey,
-          tabChildren,
-          tabs: newTabs,
-          noMatch: true,
-        };
+        return prev;
+      },
+      { multiple: [], dynamic: [] }
+    );
+  };
+
+  // 设置当前的panels
+  setCurPanes = (pathname, search) => {
+    const { tabs, tabChildren } = this.state;
+    const { breadcrumbNameMap, children } = this.props;
+
+    const activeKey = `${pathname}${search}`;
+    const isMultipe = this.breadNameInfo.multiple.find(item => PathToRegexp(item).test(pathname)); // 检测是否 multiple
+    const matchedKey = Object.keys(breadcrumbNameMap).find(item =>
+      PathToRegexp(item).test(pathname)
+    ); // 检测路径是否正确
+    const currPanelIndex = tabs.findIndex(
+      item => item.path && PathToRegexp(item.path).test(pathname)
+    ); // 检测 tabs 是否存在 pathname
+
+    // 新 tab 数据
+    let newTabs = cloneDeep(tabs);
+    if (matchedKey) {
+      const hasOwn = newTabs.find(tabs => tabs.key === activeKey);
+      tabChildren[activeKey] = React.cloneElement(children);
+
+      if (!hasOwn) {
+        if (isMultipe) {
+          newTabs = [
+            ...newTabs,
+            {
+              key: activeKey,
+              ...breadcrumbNameMap[matchedKey],
+            },
+          ];
+        } else {
+          if (currPanelIndex === -1) {
+            newTabs = [
+              ...newTabs,
+              {
+                key: activeKey,
+                ...breadcrumbNameMap[matchedKey],
+              },
+            ];
+          } else {
+            newTabs[currPanelIndex] = {
+              key: activeKey,
+              ...breadcrumbNameMap[matchedKey],
+            };
+          }
+        }
       }
     }
+
+    return {
+      ...this.state,
+      noMatch: !matchedKey,
+      activeKey,
+      tabChildren,
+      tabs: newTabs,
+    };
   };
 
   /**
@@ -183,7 +212,7 @@ class TagsNav extends PureComponent<ITagNavProps, ITagNavState> {
       let resultTabs = [];
       if (index === -1) {
         // 保留当前选中项和首页
-        resultTabs = tabs.filter((item, idx) => idx === 0 || item.pathname === activeKey);
+        resultTabs = tabs.filter((item, idx) => idx === 0 || item.key === activeKey);
         await this.setState({ tabs: resultTabs });
       } else {
         // 保留当前右键tag和首页
@@ -194,22 +223,22 @@ class TagsNav extends PureComponent<ITagNavProps, ITagNavState> {
 
     this.tabStorage();
     const newTabs = this.state.tabs;
-    router.push(newTabs[newTabs.length - 1].pathname);
+    router.push(newTabs[newTabs.length - 1].key);
   };
 
   /**
    * 关闭tab
-   * @param pathname
+   * @param key
    * @param e
    */
-  close = async (pathname, e) => {
+  close = async (key, e) => {
     e.stopPropagation();
-    const newTabs = this.state.tabs.filter(item => item.pathname !== pathname);
+    const newTabs = this.state.tabs.filter(item => item.key !== key);
     await this.setState({ tabs: newTabs });
 
     this.tabStorage();
     const { tabs } = this.state;
-    router.push(tabs[tabs.length - 1].pathname);
+    router.push(tabs[tabs.length - 1].key);
   };
 
   /**
@@ -243,11 +272,11 @@ class TagsNav extends PureComponent<ITagNavProps, ITagNavState> {
   };
 
   // 通过路由获取标签元素
-  getTagElementByRoute = route => {
+  getTagElementByRoute = (pathname, search) => {
     const tags = document.querySelectorAll('#scrollBody .ant-tag');
     for (let i = 0; i < tags.length; i++) {
       const tag = tags[i];
-      if (isEqual(route, tag.getAttribute('data-path'))) {
+      if (isEqual(`${pathname}${search}`, tag.getAttribute('data-key'))) {
         this.moveToView(tag);
       }
     }
@@ -305,17 +334,17 @@ class TagsNav extends PureComponent<ITagNavProps, ITagNavState> {
     const { breadcrumbNameMap } = this.props;
     const { tabs, activeKey } = this.state;
 
-    return tabs.map(({ name, path, pathname }, index) => {
-      const isActive = pathname === activeKey;
+    return tabs.map(({ name, path, key }, index) => {
+      const isActive = key === activeKey;
 
       return (
-        <Dropdown overlay={menu(index)} key={pathname} trigger={['contextMenu']}>
+        <Dropdown overlay={menu(index)} key={key} trigger={['contextMenu']}>
           <Tag
             className={styles.tag}
             closable={index !== 0}
-            data-pathname={pathname}
-            onClick={this.handleClick.bind(null, pathname)}
-            onClose={this.close.bind(null, pathname)}
+            data-key={key}
+            onClick={this.handleClick.bind(null, key)}
+            onClose={this.close.bind(null, key)}
           >
             <span className={classNames(styles.dot, isActive && styles['tab-active'])} />
             <span className={isActive ? styles['text'] : ''}>
@@ -342,8 +371,8 @@ class TagsNav extends PureComponent<ITagNavProps, ITagNavState> {
         renderTabBar={() => <React.Fragment>{this.renderTagNav()}</React.Fragment>}
       >
         {tabs.map(pane => (
-          <TabPane tab={pane.name} key={pane.pathname}>
-            {tabChildren[pane.pathname]}
+          <TabPane tab={pane.name} key={pane.key}>
+            {tabChildren[pane.key]}
           </TabPane>
         ))}
       </Tabs>

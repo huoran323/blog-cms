@@ -1,3 +1,9 @@
+/**
+ * hideInMenu: 在侧边菜单栏隐藏
+ * showTabNav: 是否展示在标签导航中
+ * multiple: 不同参数是否开启多个标签页
+ * shouldCache: 是否缓存(默认会缓存)
+ */
 const appRoutes = [
   {
     path: '/',
@@ -17,9 +23,22 @@ const appRoutes = [
         component: './List/Basic',
       },
       {
+        path: '/list/basic/:id',
+        name: '列表详情',
+        hideInMenu: true,
+        component: './List/Basic/Detail',
+      },
+      {
         path: '/list/draggable',
         name: '拖拽列表',
         component: './List/Draggable',
+      },
+      {
+        path: '/list/draggable/detail',
+        name: '拖拽列表详情',
+        hideInMenu: true,
+        multiple: true,
+        component: './List/Draggable/Detail',
       },
       {
         path: '/list/editable',
@@ -64,8 +83,6 @@ const appRoutes = [
     path: '/exception',
     name: '异常页',
     icon: 'warning',
-    // hideInMenu: true,
-    // showTabNav: false,
     routes: [
       {
         path: '/exception/403',
