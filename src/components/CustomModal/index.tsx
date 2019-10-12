@@ -10,12 +10,12 @@ interface IProps {
   full?: boolean; // 是否全屏展示
   visible: boolean; // 弹窗状态
   record?: any; // 当前行记录
-  title: string | React.ReactNode; // 弹窗标题
-  children: string | React.ReactNode; // 弹窗内容
-  onCancel?: () => void;
-  onSubmit?: (values, record) => void;
   modalOpts?: object;
   renderContent?: any;
+  onCancel?: () => void;
+  onSubmit?: (values, record) => void;
+  title: string | React.ReactNode; // 弹窗标题
+  children: string | React.ReactNode; // 弹窗内容
   [otherProps: string]: any;
 }
 
@@ -81,22 +81,18 @@ class CustomModal extends Component<IProps, IState> {
     const { children, renderContent } = this.props;
     if (renderContent) return renderContent(formOpts);
 
-    return (
-      <Row type="flex">
-        {React.Children.map(children, (child: React.ReactElement<any>) => {
-          const element = React.cloneElement(child, {
-            key: `modal-${child.props.title}`,
-            ...formOpts,
-          });
+    return React.Children.map(children, (child: React.ReactElement<any>) => {
+      const element = React.cloneElement(child, {
+        key: `modal-${child.props.title}`,
+        ...formOpts,
+      });
 
-          if (child.props.wrapped) {
-            return React.cloneElement(child.props.wrapped, { children: element });
-          } else {
-            return element;
-          }
-        })}
-      </Row>
-    );
+      if (child.props.wrapped) {
+        return React.cloneElement(child.props.wrapped, { children: element });
+      } else {
+        return element;
+      }
+    });
   };
 
   render() {
@@ -149,4 +145,4 @@ class CustomModal extends Component<IProps, IState> {
 }
 
 // mapPropsToFields return的值可以设置到表单上面
-export default Form.create()(CustomModal);
+export default Form.create()(CustomModal) as any;

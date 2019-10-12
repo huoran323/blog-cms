@@ -139,7 +139,7 @@ export const mergeMenuList = menuList => {
         item.icon = item.icon || menu.icon;
       }
 
-      if (item.children && item.children.length) {
+      if (menu && item.children && item.children.length) {
         // 合并隐藏菜单
         const hideMenu = menu.routes.filter(item => item.hideInMenu).filter(i => i);
 

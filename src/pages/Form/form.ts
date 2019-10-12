@@ -58,6 +58,12 @@ export const basicForm = [
     },
   },
   {
+    name: 'upload',
+    label: '上传图片',
+    type: 'upload',
+    layout,
+  },
+  {
     name: 'customer',
     label: '客户',
     type: 'mentions',

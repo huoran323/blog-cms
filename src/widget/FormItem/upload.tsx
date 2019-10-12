@@ -1,7 +1,6 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import _ from 'lodash';
-import { Card, Upload, Button, message } from 'antd';
-import { CommonTable } from '@/components';
+import { Upload, message, Icon, Modal } from 'antd';
 import projectConfig from '@/config/projectConfig';
 import { IControlProps } from '@/widget/controls';
 
@@ -15,26 +14,35 @@ interface IUploadProps extends IControlProps {
   showOnly?: boolean; // 如果只做展示 不展示相关操作
 }
 
-// status dict
-const statusDict = {
-  done: '成功',
-  uploading: '上传中',
-  error: '失败',
-};
+function getBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+}
 
 /**
  * Upload组件, 输入输出值已做处理
  */
 class UploadControlled extends Component<any, any> {
-  columns = [
-    { title: '文件名', dataIndex: 'fileUrl' },
-    { title: '上传状态', dataIndex: 'status', render: value => statusDict[value] },
-    { title: '文件大小', dataIndex: 'fileSize' },
-    { title: '上传时间', dataIndex: 'createTime' },
-  ];
-
   state = {
-    selectedRowKeys: [],
+    previewVisible: false,
+    previewImage: '',
+    fileList: [],
+  };
+
+  handleCancel = () => this.setState({ previewVisible: false });
+
+  handlePreview = async file => {
+    if (!file.url && !file.preview) {
+      file.preview = await getBase64(file.originFileObj);
+    }
+    this.setState({
+      previewImage: file.url || file.preview,
+      previewVisible: true,
+    });
   };
 
   // 上传
@@ -42,17 +50,15 @@ class UploadControlled extends Component<any, any> {
     const { onChange } = this.props;
     fileList = fileList.map(file => {
       if (file.response) {
-        const data = _.get(file, 'response.data[0]', {});
         file = {
+          ...file.response,
+          status: 'done',
+          name: file.name,
           id: file.uid,
-          fileUrl: data.path,
-          fileSize: data.size,
-          newFile: true,
         };
       }
       return file;
     });
-
     onChange(fileList);
   };
 
@@ -78,101 +84,37 @@ class UploadControlled extends Component<any, any> {
     });
   };
 
-  /**
-   * 处理删除
-   */
-  handleRemove = () => {
-    const { selectedRowKeys } = this.state;
-    const { onChange, value } = this.props;
-    if (!selectedRowKeys.length) {
-      return message.warning('请先选择');
-    }
-
-    const fileList = value.filter(item => selectedRowKeys.indexOf(item.id) === -1);
-    this.setState({ selectedRowKeys: [] });
-    onChange(fileList);
-  };
-
-  /**
-   * 处理行选择
-   * @param selectedRowKeys
-   * @param selectedRows
-   */
-  onSelectChange = (selectedRowKeys, selectedRows) => {
-    selectedRows = selectedRows.filter(item => selectedRowKeys.indexOf(item.uid) !== -1);
-    this.setState({ selectedRowKeys, selectedRows });
-  };
-
-  // 下载
-  download = () => {
-    const { selectedRowKeys } = this.state;
-    if (!selectedRowKeys.length) {
-      return message.warning('请先选择');
-    }
-    window.open(`${apiPrefix}/common/download?${JSON.stringify(this.state.selectedRowKeys)}`);
-  };
-
   render() {
-    const { selectedRowKeys } = this.state;
-    const { maxFileSize, fileTypes, showOnly, value = [], ...restProps } = this.props;
-
+    const { previewVisible, previewImage } = this.state;
+    const { maxFileSize, maxFile, fileTypes, showOnly, value = [], ...restProps } = this.props;
     const fileList = value.map(item => ({
       status: 'done',
       uid: item.id,
       ...item,
     }));
-    const selectOptions = {
-      selectedRowKeys,
-      onChange: this.onSelectChange,
-    };
+
+    const uploadButton = (
+      <div>
+        <Icon type="plus" />
+        <div className="ant-upload-text">上传</div>
+      </div>
+    );
 
     return (
-      <Card
-        type="inner"
-        title="相关附件"
-        className="common-card"
-        extra={
-          <Upload
-            showUploadList={false}
-            fileList={fileList}
-            onChange={this.handleChange}
-            beforeUpload={this.handleBeforeUpload}
-            {...restProps}
-          >
-            {!showOnly ? <a color="primary">选择文件上传</a> : null}
-          </Upload>
-        }
-      >
-        <div className="tips">
-          <p>注意事项:</p>
-          <ol style={{ listStyle: 'decimal', paddingLeft: 10 }}>
-            <li>支持最大上传文件为 {maxFileSize}MB！</li>
-            <li>
-              目前支持的附件后缀格式为：{fileTypes.join('、')}，如需其他格式支持，请联系管理员！
-            </li>
-          </ol>
-        </div>
+      <Fragment>
+        <Upload
+          {...restProps}
+          fileList={fileList}
+          onChange={this.handleChange}
+          beforeUpload={this.handleBeforeUpload}
+        >
+          {fileList.length >= maxFile ? null : uploadButton}
+        </Upload>
 
-        <div className="btn-group">
-          {!showOnly ? (
-            <Button type="primary" size="small" onClick={this.handleRemove}>
-              删除
-            </Button>
-          ) : null}
-          <Button type="primary" size="small" onClick={this.download}>
-            批量下载
-          </Button>
-        </div>
-
-        <CommonTable
-          rowKey="uid"
-          size="small"
-          bordered={true}
-          rowSelection={selectOptions}
-          columns={this.columns}
-          dataSource={fileList}
-        />
-      </Card>
+        <Modal visible={previewVisible} footer={null} onCancel={this.handleCancel}>
+          <img alt="example" style={{ width: '100%' }} src={previewImage} />
+        </Modal>
+      </Fragment>
     );
   }
 }
@@ -201,18 +143,42 @@ const defaultFileTypes = [
   'wav',
   'mp3',
 ];
-export default ({ form, name, initialValue, rules, ...otherProps }: IUploadProps) => {
+export default ({
+  form,
+  name,
+  initialValue,
+  record,
+  normalize,
+  rules,
+  ...otherProps
+}: IUploadProps) => {
   const formFieldOptions: any = { initialValue };
   // 如果有rules
   if (rules && rules.length) {
     formFieldOptions.rules = rules;
   }
 
+  // 初始值处理
+  let initVal = initialValue;
+  if (record) {
+    initVal = record[name];
+  }
+
+  // 格式化初始值
+  if (initVal !== null && typeof initVal !== 'undefined') {
+    if (_.isFunction(normalize)) {
+      formFieldOptions.initialValue = normalize(initVal);
+    } else {
+      formFieldOptions.initialValue = initVal;
+    }
+  }
+
   const uploadProps: any = {
+    maxFile: 5,
     multiple: true,
     maxFileSize: 10,
-    listType: 'text',
     fileName: 'file', // 上传到后台的文件名
+    listType: 'picture-card',
     fileTypes: defaultFileTypes,
     action: `${apiPrefix}/common/upload`,
     ...otherProps,

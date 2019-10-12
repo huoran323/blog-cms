@@ -42,6 +42,7 @@ const CustomForm: React.FC<IProps> = props => {
     type,
     rows,
     cols,
+    width,
     appendTo,
     loading,
     footer,
@@ -144,7 +145,7 @@ const CustomForm: React.FC<IProps> = props => {
 
           if (type === 'inline') {
             formProps.style = {
-              width: formProps.width || this.width[fieldType],
+              width: formProps.width || width[fieldType],
             };
           }
           if (getPopupContainer) {
@@ -186,7 +187,7 @@ CustomForm.defaultProps = {
   loading: false,
   formItemLayout: {
     labelCol: { span: 6 },
-    wrapperCol: { span: 18 },
+    wrapperCol: { span: 16 },
   },
 
   rows: {
